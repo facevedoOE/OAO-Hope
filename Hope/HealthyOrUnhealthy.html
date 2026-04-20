@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{font-family:Arial,sans-serif;background:#0f0f1a;color:#e8e8f0;padding:20px;font-size:14px;line-height:1.6;}
+  h2{font-size:17px;font-weight:800;color:#a0c4ff;margin-bottom:6px;}
+  .subtitle{font-size:13px;color:#94a3b8;margin-bottom:18px;}
+  .card-bank{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:18px;}
+  .card{background:rgba(79,172,254,0.1);border:2px solid rgba(79,172,254,0.25);border-radius:10px;padding:10px 14px;font-size:13px;font-weight:600;color:#e8e8f0;cursor:pointer;transition:all .15s;user-select:none;}
+  .card:hover{border-color:#4facfe;background:rgba(79,172,254,0.2);}
+  .card.selected{background:rgba(79,172,254,0.3);border-color:#4facfe;color:#fff;box-shadow:0 0 0 3px rgba(79,172,254,0.2);}
+  .cat-btns{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:18px;}
+  .cat-btn{flex:1;min-width:160px;padding:13px 16px;border-radius:12px;font-size:13px;font-weight:700;cursor:pointer;border:2px solid;transition:all .15s;}
+  .cat-btn.healthy{background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.4);color:#34d399;}
+  .cat-btn.healthy:hover{background:rgba(52,211,153,0.22);}
+  .cat-btn.unhealthy{background:rgba(248,113,113,0.1);border-color:rgba(248,113,113,0.4);color:#f87171;}
+  .cat-btn.unhealthy:hover{background:rgba(248,113,113,0.22);}
+  .results{display:flex;flex-wrap:wrap;gap:12px;margin-bottom:16px;}
+  .zone{flex:1;min-width:180px;}
+  .zone-label{font-size:11px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:7px;}
+  .zone-label.healthy{color:#34d399;}
+  .zone-label.unhealthy{color:#f87171;}
+  .zone-box{border-radius:12px;padding:10px;min-height:52px;display:flex;flex-direction:column;gap:7px;border:2px dashed;}
+  .zone-box.healthy{background:rgba(52,211,153,0.05);border-color:rgba(52,211,153,0.25);}
+  .zone-box.unhealthy{background:rgba(248,113,113,0.05);border-color:rgba(248,113,113,0.25);}
+  .placeholder{font-size:12px;color:#4b5563;font-style:italic;text-align:center;padding:6px 0;}
+  .placed{border-radius:8px;padding:9px 12px;font-size:13px;font-weight:600;display:flex;justify-content:space-between;align-items:center;gap:8px;}
+  .placed.correct{background:rgba(52,211,153,0.15);border:1px solid rgba(52,211,153,0.4);color:#6ee7b7;}
+  .placed.wrong{background:rgba(248,113,113,0.15);border:1px solid rgba(248,113,113,0.4);color:#fca5a5;}
+  .placed-note{font-size:11px;color:#94a3b8;font-style:italic;margin-top:3px;line-height:1.4;}
+  #feedback{display:none;border-radius:12px;padding:14px 18px;text-align:center;margin-bottom:14px;}
+  #feedback.done{display:block;background:rgba(52,211,153,0.12);border:1px solid rgba(52,211,153,0.3);}
+  #feedback p{margin:0;font-size:14px;font-weight:700;color:#34d399;}
+  #feedback small{font-size:12px;color:#94a3b8;display:block;margin-top:5px;}
+  #reset-btn{background:rgba(255,255,255,0.07);border:1px solid rgba(255,255,255,0.15);border-radius:8px;padding:8px 20px;font-size:13px;color:#94a3b8;cursor:pointer;display:block;margin:0 auto;}
+  #reset-btn:hover{background:rgba(255,255,255,0.12);}
+  .hint{font-size:12px;color:#fb923c;font-weight:600;min-height:18px;margin-bottom:14px;text-align:center;}
+</style>
+</head>
+<body>
+<h2>✋ Healthy or Unhealthy Coping?</h2>
+<p class="subtitle">Step 1: Click a strategy card to select it.&nbsp;&nbsp;Step 2: Click a category button to sort it.</p>
+<div class="card-bank" id="bank"></div>
+<p class="hint" id="hint">Select a card above, then choose a category below.</p>
+<div class="cat-btns">
+  <button class="cat-btn healthy" onclick="place('healthy')">✅ Healthy Coping</button>
+  <button class="cat-btn unhealthy" onclick="place('unhealthy')">❌ Unhealthy / Self-Medication</button>
+</div>
+<div class="results">
+  <div class="zone">
+    <div class="zone-label healthy">✅ Healthy Coping</div>
+    <div class="zone-box healthy" id="zone-healthy">
+      <p class="placeholder" id="ph-healthy">Cards will appear here</p>
+    </div>
+  </div>
+  <div class="zone">
+    <div class="zone-label unhealthy">❌ Unhealthy / Self-Medication</div>
+    <div class="zone-box unhealthy" id="zone-unhealthy">
+      <p class="placeholder" id="ph-unhealthy">Cards will appear here</p>
+    </div>
+  </div>
+</div>
+<div id="feedback">
+  <p>🎉 Activity complete! All 6 strategies sorted.</p>
+  <small>Healthy coping treats the root cause. Self-medication only masks it — and makes things worse over time.</small>
+</div>
+<button id="reset-btn" onclick="reset()">↺ Reset Activity</button>
+<script>
+var allCards=[
+  {id:'c1',cat:'healthy',  text:'🏃 Going for a run when stressed'},
+  {id:'c2',cat:'unhealthy',text:'🍺 Drinking to forget a bad day'},
+  {id:'c3',cat:'healthy',  text:'✍️ Journaling about your feelings'},
+  {id:'c4',cat:'unhealthy',text:"💊 Taking a friend's Xanax to calm down"},
+  {id:'c5',cat:'healthy',  text:'🧘 Deep breathing during anxiety'},
+  {id:'c6',cat:'unhealthy',text:'💨 Vaping to deal with school pressure'}
+];
+var selected=null,placed={};
+function shuffle(a){var r=a.slice();for(var i=r.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=r[i];r[i]=r[j];r[j]=t;}return r;}
+function renderBank(){
+  var bank=document.getElementById('bank');bank.innerHTML='';
+  shuffle(allCards).forEach(function(c){
+    if(placed[c.id])return;
+    var btn=document.createElement('button');
+    btn.className='card'+(selected===c.id?' selected':'');
+    btn.textContent=c.text;btn.setAttribute('data-id',c.id);
+    btn.onclick=function(){selected=c.id;document.getElementById('hint').textContent='Now click a category button below to sort this card.';renderBank();};
+    bank.appendChild(btn);
+  });
+  if(!bank.innerHTML)bank.innerHTML='<p style="font-size:13px;color:#64748b;font-style:italic;">All cards have been sorted!</p>';
+}
+function place(zone){
+  if(!selected){document.getElementById('hint').textContent='⚠️ Please select a card first!';return;}
+  var card=allCards.find(function(c){return c.id===selected;});
+  if(!card)return;
+  var correct=card.cat===zone;
+  placed[card.id]=true;selected=null;
+  document.getElementById('hint').textContent=correct?'✓ Correct! Pick your next card.':'✗ Not quite — check where it landed.';
+  var ph=document.getElementById('ph-'+card.cat);if(ph)ph.style.display='none';
+  var wrap=document.createElement('div');
+  var row=document.createElement('div');
+  row.className='placed '+(correct?'correct':'wrong');
+  row.innerHTML='<span>'+card.text+'</span><span style="font-size:16px;">'+(correct?'✓':'✗')+'</span>';
+  wrap.appendChild(row);
+  if(!correct){var note=document.createElement('p');note.className='placed-note';note.textContent='Moved to correct category. This is self-medication — it masks pain but worsens symptoms over time.';wrap.appendChild(note);}
+  document.getElementById('zone-'+card.cat).appendChild(wrap);
+  renderBank();
+  if(Object.keys(placed).length===allCards.length)document.getElementById('feedback').className='done';
+}
+function reset(){
+  placed={};selected=null;
+  document.getElementById('feedback').className='';
+  document.getElementById('hint').textContent='Select a card above, then choose a category below.';
+  ['healthy','unhealthy'].forEach(function(z){
+    var box=document.getElementById('zone-'+z);
+    box.innerHTML='<p class="placeholder" id="ph-'+z+'">Cards will appear here</p>';
+  });
+  renderBank();
+}
+renderBank();
+</script>
+</body>
+</html>
