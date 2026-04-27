@@ -1,0 +1,450 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Helping or Enabling? — Sort Activity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0f0f1a;
+  color: #e5e7eb;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  padding: 24px 16px;
+  min-height: 100vh;
+}
+.container { max-width: 820px; margin: 0 auto; }
+
+/* Header / XP Bar */
+.header {
+  background: linear-gradient(135deg, #161625 0%, #1f1f35 100%);
+  border-radius: 14px;
+  padding: 20px 24px;
+  border: 1px solid #2a2a44;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.title { color: #ffffff; font-size: 1.2em; font-weight: 700; margin: 0; }
+.subtitle { color: #a5a5b8; font-size: 0.85em; margin-top: 4px; }
+.xp-display {
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: #0f0f1a;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.95em;
+  box-shadow: 0 4px 12px rgba(79, 172, 254, 0.3);
+}
+
+/* Progress */
+.progress-bar {
+  background: #161625;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  border: 1px solid #2a2a44;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.progress-track {
+  flex: 1;
+  height: 8px;
+  background: #0f0f1a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #4facfe, #a855f7);
+  width: 0%;
+  transition: width 0.5s ease;
+}
+.progress-text { color: #a5a5b8; font-size: 0.85em; font-weight: 600; min-width: 60px; text-align: right; }
+
+/* Scenario Card */
+.scenario-card {
+  background: #161625;
+  border-radius: 16px;
+  padding: 28px;
+  border: 1px solid #2a2a44;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.scenario-num {
+  display: inline-block;
+  background: rgba(168, 85, 247, 0.15);
+  color: #a855f7;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.scenario-text {
+  color: #e5e7eb;
+  font-size: 1.05em;
+  margin-bottom: 22px;
+  line-height: 1.7;
+}
+.scenario-text strong { color: #ffffff; }
+
+/* Choice Buttons */
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.choice-btn {
+  background: #0f0f1a;
+  border: 2px solid #2a2a44;
+  color: #e5e7eb;
+  padding: 18px 20px;
+  border-radius: 12px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: inherit;
+}
+.choice-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #4facfe;
+}
+.choice-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+.choice-btn.helping-btn:hover:not(:disabled) { border-color: #34d399; background: rgba(52, 211, 153, 0.05); }
+.choice-btn.enabling-btn:hover:not(:disabled) { border-color: #f87171; background: rgba(248, 113, 113, 0.05); }
+.choice-btn.correct {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: #34d399;
+  color: #34d399;
+}
+.choice-btn.incorrect {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: #f87171;
+  color: #f87171;
+}
+.choice-btn.dimmed { opacity: 0.4; }
+
+/* Feedback */
+.feedback {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 12px;
+  display: none;
+  animation: slideIn 0.3s ease;
+}
+.feedback.show { display: block; }
+.feedback.correct {
+  background: rgba(52, 211, 153, 0.08);
+  border-left: 3px solid #34d399;
+}
+.feedback.incorrect {
+  background: rgba(248, 113, 113, 0.08);
+  border-left: 3px solid #f87171;
+}
+.feedback-header {
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.feedback.correct .feedback-header { color: #34d399; }
+.feedback.incorrect .feedback-header { color: #f87171; }
+.feedback-text { color: #cbd5e1; font-size: 0.95em; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Next button */
+.next-btn {
+  background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+  color: #0f0f1a;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 1em;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 16px;
+  display: none;
+  width: 100%;
+  font-family: inherit;
+  transition: transform 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); }
+.next-btn.show { display: block; }
+
+/* Final screen */
+.final-card {
+  background: linear-gradient(135deg, #161625 0%, #1f1f35 100%);
+  border-radius: 16px;
+  padding: 40px 28px;
+  border: 1px solid #2a2a44;
+  text-align: center;
+}
+.final-card.hidden { display: none; }
+.final-emoji { font-size: 3.4em; margin-bottom: 14px; }
+.final-title { color: #ffffff; font-size: 1.6em; margin-bottom: 10px; font-weight: 700; }
+.final-score {
+  display: inline-block;
+  background: linear-gradient(135deg, #4facfe, #00f2fe);
+  color: #0f0f1a;
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-size: 1.4em;
+  font-weight: 700;
+  margin: 14px 0 22px 0;
+}
+.final-message { color: #cbd5e1; max-width: 540px; margin: 0 auto 24px auto; }
+.restart-btn {
+  background: transparent;
+  color: #a855f7;
+  border: 2px solid #a855f7;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.restart-btn:hover { background: rgba(168, 85, 247, 0.1); }
+
+@media (max-width: 520px) {
+  .choice-grid { grid-template-columns: 1fr; }
+  .header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div>
+      <h1 class="title">Helping or Enabling?</h1>
+      <div class="subtitle">Sort each scenario into the right category.</div>
+    </div>
+    <div class="xp-display">⚡ <span id="xp">0</span> XP</div>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+
+  <div id="quizArea">
+    <div class="scenario-card" id="scenarioCard">
+      <div class="scenario-num" id="scenarioNum">Scenario 1</div>
+      <div class="scenario-text" id="scenarioText"></div>
+
+      <div class="choice-grid">
+        <button class="choice-btn helping-btn" id="helpingBtn" data-answer="helping">✓ Helping</button>
+        <button class="choice-btn enabling-btn" id="enablingBtn" data-answer="enabling">✗ Enabling</button>
+      </div>
+
+      <div class="feedback" id="feedback">
+        <div class="feedback-header" id="feedbackHeader"></div>
+        <div class="feedback-text" id="feedbackText"></div>
+      </div>
+
+      <button class="next-btn" id="nextBtn">Next Scenario →</button>
+    </div>
+  </div>
+
+  <div class="final-card hidden" id="finalCard">
+    <div class="final-emoji" id="finalEmoji">🎉</div>
+    <div class="final-title" id="finalTitle">Activity Complete!</div>
+    <div class="final-score">⚡ <span id="finalXp">0</span> XP earned</div>
+    <div class="final-message" id="finalMessage"></div>
+    <button class="restart-btn" id="restartBtn">↻ Try Again</button>
+  </div>
+
+</div>
+
+<script>
+const scenarios = [
+  {
+    text: "Your friend Maya keeps asking you to <strong>tell her parents she's sleeping at your house</strong> when she's actually going to a party where there will be alcohol. You agree because you don't want to start drama.",
+    answer: "enabling",
+    explanation: "Lying to her parents protects Maya from consequences and lets the risky behavior keep going. Real help means being honest — even when it's uncomfortable."
+  },
+  {
+    text: "You've noticed your friend Jordan seems off — quieter, sleeping in class, missing practice. After thinking about it, you say: <strong>\"Hey, I've noticed you've seemed kind of down lately. I'm here if you want to talk.\"</strong>",
+    answer: "helping",
+    explanation: "This is textbook CARE — a private, non-accusatory \"I\" statement that opens the door without forcing it. It tells Jordan you've noticed and you care, without putting him on the defensive."
+  },
+  {
+    text: "Your friend Tyler has been smoking weed before school. He asks you to <strong>hold his vape in your locker</strong> so his parents don't find it. You say yes because you want him to trust you.",
+    answer: "enabling",
+    explanation: "Holding it for him keeps it in his life and puts you at serious risk. Trust isn't built by hiding things — it's built by being honest enough to say no when something is going to hurt your friend."
+  },
+  {
+    text: "You're worried about your friend Sam, who has been drinking a lot at parties. You tell your school counselor what you've noticed, even though Sam will probably be upset with you for a while.",
+    answer: "helping",
+    explanation: "This is exactly right — even though it feels like betrayal in the moment, telling a trusted adult is one of the most powerful things a friend can do. A mad friend is way better than a friend in the hospital."
+  },
+  {
+    text: "Your friend Alex got drunk at a party and is too out of it to go home. They ask you to <strong>just let them sleep it off</strong> in the basement. They're breathing slowly and you can't really wake them up.",
+    answer: "enabling",
+    explanation: "This is an overdose emergency. Slow breathing and not being able to wake someone up = call 911 immediately. \"Sleeping it off\" can mean dying. Florida's Good Samaritan law protects you for calling."
+  },
+  {
+    text: "Your friend Riley has been stressed about school and started taking pills she got from someone at school to focus. You tell her: <strong>\"That really worries me. Can we talk to the school counselor together? I'll go with you.\"</strong>",
+    answer: "helping",
+    explanation: "Offering to go <em>with</em> them is one of the most powerful things you can do. It removes the scariest part — walking in alone — and shows your friend they're not in this by themselves."
+  },
+  {
+    text: "Your friend Dev keeps asking to copy your homework because he's been too high to finish his own. You give it to him every time so his grades don't drop and his parents won't find out.",
+    answer: "enabling",
+    explanation: "Letting him copy means his parents and teachers never see the warning signs. Falling grades aren't the problem — they're a signal something's wrong. Hiding the signal protects the substance use, not your friend."
+  },
+  {
+    text: "You're at a party and your friend Casey is drinking heavily. You don't drink, but you stay near them, keep an eye on them, and when they want to leave, you make sure they don't get into a car with someone who's been drinking.",
+    answer: "helping",
+    explanation: "Staying sober and watching out for impaired friends saves lives. You're not preventing them from drinking — you're preventing the worst possible outcome from drinking. That's real friendship."
+  }
+];
+
+let currentIndex = 0;
+let xp = 0;
+let answered = false;
+
+const scenarioNumEl = document.getElementById('scenarioNum');
+const scenarioTextEl = document.getElementById('scenarioText');
+const helpingBtn = document.getElementById('helpingBtn');
+const enablingBtn = document.getElementById('enablingBtn');
+const feedback = document.getElementById('feedback');
+const feedbackHeader = document.getElementById('feedbackHeader');
+const feedbackText = document.getElementById('feedbackText');
+const nextBtn = document.getElementById('nextBtn');
+const xpEl = document.getElementById('xp');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const quizArea = document.getElementById('quizArea');
+const finalCard = document.getElementById('finalCard');
+const finalXp = document.getElementById('finalXp');
+const finalMessage = document.getElementById('finalMessage');
+const finalEmoji = document.getElementById('finalEmoji');
+const finalTitle = document.getElementById('finalTitle');
+const restartBtn = document.getElementById('restartBtn');
+
+function loadScenario() {
+  const s = scenarios[currentIndex];
+  scenarioNumEl.textContent = 'Scenario ' + (currentIndex + 1) + ' of ' + scenarios.length;
+  scenarioTextEl.innerHTML = s.text;
+  helpingBtn.disabled = false;
+  enablingBtn.disabled = false;
+  helpingBtn.classList.remove('correct', 'incorrect', 'dimmed');
+  enablingBtn.classList.remove('correct', 'incorrect', 'dimmed');
+  feedback.classList.remove('show', 'correct', 'incorrect');
+  nextBtn.classList.remove('show');
+  answered = false;
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = (currentIndex / scenarios.length) * 100;
+  progressFill.style.width = pct + '%';
+  progressText.textContent = currentIndex + ' / ' + scenarios.length;
+}
+
+function handleChoice(choice) {
+  if (answered) return;
+  answered = true;
+  const s = scenarios[currentIndex];
+  const correct = choice === s.answer;
+  helpingBtn.disabled = true;
+  enablingBtn.disabled = true;
+
+  const chosenBtn = choice === 'helping' ? helpingBtn : enablingBtn;
+  const otherBtn = choice === 'helping' ? enablingBtn : helpingBtn;
+
+  if (correct) {
+    chosenBtn.classList.add('correct');
+    otherBtn.classList.add('dimmed');
+    xp += 10;
+    feedback.classList.add('show', 'correct');
+    feedbackHeader.innerHTML = '✓ Got it.';
+    feedbackText.textContent = s.explanation;
+  } else {
+    chosenBtn.classList.add('incorrect');
+    const correctBtn = s.answer === 'helping' ? helpingBtn : enablingBtn;
+    correctBtn.classList.add('correct');
+    feedback.classList.add('show', 'incorrect');
+    feedbackHeader.innerHTML = '✗ Not quite.';
+    feedbackText.textContent = s.explanation;
+  }
+
+  xpEl.textContent = xp;
+  nextBtn.classList.add('show');
+}
+
+function nextScenario() {
+  currentIndex++;
+  if (currentIndex >= scenarios.length) {
+    showFinal();
+  } else {
+    loadScenario();
+  }
+}
+
+function showFinal() {
+  quizArea.style.display = 'none';
+  finalCard.classList.remove('hidden');
+  finalXp.textContent = xp;
+  progressFill.style.width = '100%';
+  progressText.textContent = scenarios.length + ' / ' + scenarios.length;
+
+  const maxXp = scenarios.length * 10;
+  const pct = xp / maxXp;
+  if (pct === 1) {
+    finalEmoji.textContent = '🌟';
+    finalTitle.textContent = 'Perfect score!';
+    finalMessage.textContent = 'You nailed every scenario. You understand the line between helping and enabling — and that means you\'re the kind of friend who could actually change someone\'s life. Keep this knowledge. You\'ll need it.';
+  } else if (pct >= 0.75) {
+    finalEmoji.textContent = '💪';
+    finalTitle.textContent = 'Strong work.';
+    finalMessage.textContent = 'You\'ve got the core idea down. Look back at the ones you missed — those are the moments where good intentions can quietly make things worse. Knowing the difference is what separates a real friend from someone who just feels bad.';
+  } else if (pct >= 0.5) {
+    finalEmoji.textContent = '📚';
+    finalTitle.textContent = 'You\'re getting there.';
+    finalMessage.textContent = 'Helping vs. enabling is one of the trickiest concepts in this whole course because enabling almost always feels like kindness. Try the activity again — and re-read Section 3 of your reading. The more you practice, the more automatic it becomes.';
+  } else {
+    finalEmoji.textContent = '🔄';
+    finalTitle.textContent = 'Worth another try.';
+    finalMessage.textContent = 'This is hard stuff — and most adults get it wrong too. Take another pass through the reading, especially the helping vs. enabling section, and try this activity again. Real understanding here could save someone\'s life one day.';
+  }
+}
+
+helpingBtn.addEventListener('click', () => handleChoice('helping'));
+enablingBtn.addEventListener('click', () => handleChoice('enabling'));
+nextBtn.addEventListener('click', nextScenario);
+restartBtn.addEventListener('click', () => {
+  currentIndex = 0;
+  xp = 0;
+  xpEl.textContent = 0;
+  quizArea.style.display = 'block';
+  finalCard.classList.add('hidden');
+  loadScenario();
+});
+
+loadScenario();
+</script>
+
+</body>
+</html>
