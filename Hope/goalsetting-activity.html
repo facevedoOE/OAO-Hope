@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Goal or Wish? — Sort Activity</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #0f0f1a;
+  color: #e5e7eb;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  line-height: 1.6;
+  padding: 24px 16px;
+  min-height: 100vh;
+}
+.container { max-width: 820px; margin: 0 auto; }
+
+/* Header / XP Bar */
+.header {
+  background: linear-gradient(135deg, #161625 0%, #1f1f35 100%);
+  border-radius: 14px;
+  padding: 20px 24px;
+  border: 1px solid #2a2a44;
+  margin-bottom: 18px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+.title { color: #ffffff; font-size: 1.2em; font-weight: 700; margin: 0; }
+.subtitle { color: #a5a5b8; font-size: 0.85em; margin-top: 4px; }
+.xp-display {
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #0f0f1a;
+  padding: 8px 16px;
+  border-radius: 20px;
+  font-weight: 700;
+  font-size: 0.95em;
+  box-shadow: 0 4px 12px rgba(52, 211, 153, 0.3);
+}
+
+/* Progress */
+.progress-bar {
+  background: #161625;
+  border-radius: 12px;
+  padding: 14px 18px;
+  margin-bottom: 18px;
+  border: 1px solid #2a2a44;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.progress-track {
+  flex: 1;
+  height: 8px;
+  background: #0f0f1a;
+  border-radius: 4px;
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #34d399, #4facfe);
+  width: 0%;
+  transition: width 0.5s ease;
+}
+.progress-text { color: #a5a5b8; font-size: 0.85em; font-weight: 600; min-width: 60px; text-align: right; }
+
+/* Scenario Card */
+.scenario-card {
+  background: #161625;
+  border-radius: 16px;
+  padding: 28px;
+  border: 1px solid #2a2a44;
+  margin-bottom: 18px;
+  position: relative;
+  overflow: hidden;
+}
+.scenario-num {
+  display: inline-block;
+  background: rgba(52, 211, 153, 0.15);
+  color: #34d399;
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75em;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.scenario-text {
+  color: #e5e7eb;
+  font-size: 1.05em;
+  margin-bottom: 22px;
+  line-height: 1.7;
+  background: #0f0f1a;
+  border-left: 3px solid #4facfe;
+  padding: 16px 18px;
+  border-radius: 0 10px 10px 0;
+  font-style: italic;
+}
+
+/* Choice Buttons */
+.choice-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+.choice-btn {
+  background: #0f0f1a;
+  border: 2px solid #2a2a44;
+  color: #e5e7eb;
+  padding: 18px 20px;
+  border-radius: 12px;
+  font-size: 1em;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  font-family: inherit;
+}
+.choice-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  border-color: #4facfe;
+}
+.choice-btn:disabled { cursor: not-allowed; opacity: 0.6; }
+.choice-btn.goal-btn:hover:not(:disabled) { border-color: #34d399; background: rgba(52, 211, 153, 0.05); }
+.choice-btn.wish-btn:hover:not(:disabled) { border-color: #fb923c; background: rgba(251, 146, 60, 0.05); }
+.choice-btn.correct {
+  background: rgba(52, 211, 153, 0.15);
+  border-color: #34d399;
+  color: #34d399;
+}
+.choice-btn.incorrect {
+  background: rgba(248, 113, 113, 0.15);
+  border-color: #f87171;
+  color: #f87171;
+}
+.choice-btn.dimmed { opacity: 0.4; }
+
+/* Feedback */
+.feedback {
+  margin-top: 16px;
+  padding: 18px;
+  border-radius: 12px;
+  display: none;
+  animation: slideIn 0.3s ease;
+}
+.feedback.show { display: block; }
+.feedback.correct {
+  background: rgba(52, 211, 153, 0.08);
+  border-left: 3px solid #34d399;
+}
+.feedback.incorrect {
+  background: rgba(248, 113, 113, 0.08);
+  border-left: 3px solid #f87171;
+}
+.feedback-header {
+  font-weight: 700;
+  margin-bottom: 6px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.feedback.correct .feedback-header { color: #34d399; }
+.feedback.incorrect .feedback-header { color: #f87171; }
+.feedback-text { color: #cbd5e1; font-size: 0.95em; }
+.feedback-text strong { color: #ffffff; }
+@keyframes slideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Next button */
+.next-btn {
+  background: linear-gradient(135deg, #34d399 0%, #10b981 100%);
+  color: #0f0f1a;
+  border: none;
+  padding: 12px 28px;
+  border-radius: 10px;
+  font-size: 1em;
+  font-weight: 700;
+  cursor: pointer;
+  margin-top: 16px;
+  display: none;
+  width: 100%;
+  font-family: inherit;
+  transition: transform 0.2s;
+}
+.next-btn:hover { transform: translateY(-2px); }
+.next-btn.show { display: block; }
+
+/* Final screen */
+.final-card {
+  background: linear-gradient(135deg, #161625 0%, #1f1f35 100%);
+  border-radius: 16px;
+  padding: 40px 28px;
+  border: 1px solid #2a2a44;
+  text-align: center;
+}
+.final-card.hidden { display: none; }
+.final-emoji { font-size: 3.4em; margin-bottom: 14px; }
+.final-title { color: #ffffff; font-size: 1.6em; margin-bottom: 10px; font-weight: 700; }
+.final-score {
+  display: inline-block;
+  background: linear-gradient(135deg, #34d399, #10b981);
+  color: #0f0f1a;
+  padding: 12px 28px;
+  border-radius: 30px;
+  font-size: 1.4em;
+  font-weight: 700;
+  margin: 14px 0 22px 0;
+}
+.final-message { color: #cbd5e1; max-width: 540px; margin: 0 auto 24px auto; }
+.restart-btn {
+  background: transparent;
+  color: #34d399;
+  border: 2px solid #34d399;
+  padding: 10px 22px;
+  border-radius: 10px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+}
+.restart-btn:hover { background: rgba(52, 211, 153, 0.1); }
+
+@media (max-width: 520px) {
+  .choice-grid { grid-template-columns: 1fr; }
+  .header { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <div class="header">
+    <div>
+      <h1 class="title">Goal or Wish?</h1>
+      <div class="subtitle">A real SMART goal is Specific, Measurable, Achievable, Relevant, and Time-bound.</div>
+    </div>
+    <div class="xp-display">⚡ <span id="xp">0</span> XP</div>
+  </div>
+
+  <div class="progress-bar">
+    <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 8</div>
+  </div>
+
+  <div id="quizArea">
+    <div class="scenario-card" id="scenarioCard">
+      <div class="scenario-num" id="scenarioNum">Statement 1</div>
+      <div class="scenario-text" id="scenarioText"></div>
+
+      <div class="choice-grid">
+        <button class="choice-btn goal-btn" id="goalBtn" data-answer="goal">✓ SMART Goal</button>
+        <button class="choice-btn wish-btn" id="wishBtn" data-answer="wish">✗ Just a Wish</button>
+      </div>
+
+      <div class="feedback" id="feedback">
+        <div class="feedback-header" id="feedbackHeader"></div>
+        <div class="feedback-text" id="feedbackText"></div>
+      </div>
+
+      <button class="next-btn" id="nextBtn">Next Statement →</button>
+    </div>
+  </div>
+
+  <div class="final-card hidden" id="finalCard">
+    <div class="final-emoji" id="finalEmoji">🎉</div>
+    <div class="final-title" id="finalTitle">Activity Complete!</div>
+    <div class="final-score">⚡ <span id="finalXp">0</span> XP earned</div>
+    <div class="final-message" id="finalMessage"></div>
+    <button class="restart-btn" id="restartBtn">↻ Try Again</button>
+  </div>
+
+</div>
+
+<script>
+const scenarios = [
+  {
+    text: "\"I want to be more successful in life.\"",
+    answer: "wish",
+    explanation: "<strong>What's missing:</strong> Pretty much everything. \"Successful\" is undefined, there's no measurable result, and no deadline. This is a feeling, not a goal. <strong>Try instead:</strong> \"By the end of 9th grade, I will earn a 3.5 GPA and be on at least one school sports team or club.\""
+  },
+  {
+    text: "\"I will save $400 by my 16th birthday by setting aside $25 every two weeks from my babysitting jobs.\"",
+    answer: "goal",
+    explanation: "<strong>This is a SMART goal.</strong> Specific (save money for a birthday), Measurable ($400), Achievable ($25/two weeks is realistic), Relevant (clear personal target), Time-bound (16th birthday). You could literally start tomorrow."
+  },
+  {
+    text: "\"I'm going to be famous one day.\"",
+    answer: "wish",
+    explanation: "<strong>What's missing:</strong> Famous for what? By when? With what concrete steps? This is the kind of statement that lives in your head for years without ever turning into action. <strong>Try instead:</strong> \"I will post one short video to my YouTube channel every week for 6 months and grow to 500 subscribers.\""
+  },
+  {
+    text: "\"I will read 10 books outside of school by the end of summer break by reading at least 30 pages every day.\"",
+    answer: "goal",
+    explanation: "<strong>This is a SMART goal.</strong> Specific (read books outside school), Measurable (10 books / 30 pages a day), Achievable (a normal pace), Relevant (clearly chosen by the person), Time-bound (end of summer)."
+  },
+  {
+    text: "\"I should probably get my act together this year.\"",
+    answer: "wish",
+    explanation: "<strong>What's missing:</strong> The words \"should,\" \"probably,\" and \"act together\" are all vague. There is no measurable target and no deadline. <strong>Try instead:</strong> \"I will turn in every assignment on time for the entire first quarter.\""
+  },
+  {
+    text: "\"I will run a 5K with a finish time under 30 minutes by November 1st by training three days a week starting now.\"",
+    answer: "goal",
+    explanation: "<strong>This is a SMART goal.</strong> Specific (run a 5K), Measurable (under 30 minutes), Achievable (with training), Relevant (you chose it), Time-bound (Nov 1). Even better — it includes the action plan (3 days a week)."
+  },
+  {
+    text: "\"I want a better relationship with my parents.\"",
+    answer: "wish",
+    explanation: "<strong>What's missing:</strong> \"Better\" how? Measured how? By when? This is a beautiful intention but not yet a goal. <strong>Try instead:</strong> \"For the next month, I'll eat dinner with my family with my phone face-down at least 4 nights a week.\""
+  },
+  {
+    text: "\"I will apply to at least 6 colleges by December 1 of senior year, including the University of Florida and FSU.\"",
+    answer: "goal",
+    explanation: "<strong>This is a SMART goal.</strong> Specific (apply to colleges, two named), Measurable (at least 6), Achievable (normal application count), Relevant (named schools you've chosen), Time-bound (Dec 1 of senior year)."
+  }
+];
+
+let currentIndex = 0;
+let xp = 0;
+let answered = false;
+
+const scenarioNumEl = document.getElementById('scenarioNum');
+const scenarioTextEl = document.getElementById('scenarioText');
+const goalBtn = document.getElementById('goalBtn');
+const wishBtn = document.getElementById('wishBtn');
+const feedback = document.getElementById('feedback');
+const feedbackHeader = document.getElementById('feedbackHeader');
+const feedbackText = document.getElementById('feedbackText');
+const nextBtn = document.getElementById('nextBtn');
+const xpEl = document.getElementById('xp');
+const progressFill = document.getElementById('progressFill');
+const progressText = document.getElementById('progressText');
+const quizArea = document.getElementById('quizArea');
+const finalCard = document.getElementById('finalCard');
+const finalXp = document.getElementById('finalXp');
+const finalMessage = document.getElementById('finalMessage');
+const finalEmoji = document.getElementById('finalEmoji');
+const finalTitle = document.getElementById('finalTitle');
+const restartBtn = document.getElementById('restartBtn');
+
+function loadScenario() {
+  const s = scenarios[currentIndex];
+  scenarioNumEl.textContent = 'Statement ' + (currentIndex + 1) + ' of ' + scenarios.length;
+  scenarioTextEl.innerHTML = s.text;
+  goalBtn.disabled = false;
+  wishBtn.disabled = false;
+  goalBtn.classList.remove('correct', 'incorrect', 'dimmed');
+  wishBtn.classList.remove('correct', 'incorrect', 'dimmed');
+  feedback.classList.remove('show', 'correct', 'incorrect');
+  nextBtn.classList.remove('show');
+  answered = false;
+  updateProgress();
+}
+
+function updateProgress() {
+  const pct = (currentIndex / scenarios.length) * 100;
+  progressFill.style.width = pct + '%';
+  progressText.textContent = currentIndex + ' / ' + scenarios.length;
+}
+
+function handleChoice(choice) {
+  if (answered) return;
+  answered = true;
+  const s = scenarios[currentIndex];
+  const correct = choice === s.answer;
+  goalBtn.disabled = true;
+  wishBtn.disabled = true;
+
+  const chosenBtn = choice === 'goal' ? goalBtn : wishBtn;
+  const otherBtn = choice === 'goal' ? wishBtn : goalBtn;
+
+  if (correct) {
+    chosenBtn.classList.add('correct');
+    otherBtn.classList.add('dimmed');
+    xp += 10;
+    feedback.classList.add('show', 'correct');
+    feedbackHeader.innerHTML = '✓ Got it.';
+    feedbackText.innerHTML = s.explanation;
+  } else {
+    chosenBtn.classList.add('incorrect');
+    const correctBtn = s.answer === 'goal' ? goalBtn : wishBtn;
+    correctBtn.classList.add('correct');
+    feedback.classList.add('show', 'incorrect');
+    feedbackHeader.innerHTML = '✗ Not quite.';
+    feedbackText.innerHTML = s.explanation;
+  }
+
+  xpEl.textContent = xp;
+  nextBtn.classList.add('show');
+}
+
+function nextScenario() {
+  currentIndex++;
+  if (currentIndex >= scenarios.length) {
+    showFinal();
+  } else {
+    loadScenario();
+  }
+}
+
+function showFinal() {
+  quizArea.style.display = 'none';
+  finalCard.classList.remove('hidden');
+  finalXp.textContent = xp;
+  progressFill.style.width = '100%';
+  progressText.textContent = scenarios.length + ' / ' + scenarios.length;
+
+  const maxXp = scenarios.length * 10;
+  const pct = xp / maxXp;
+  if (pct === 1) {
+    finalEmoji.textContent = '🌟';
+    finalTitle.textContent = 'Perfect score!';
+    finalMessage.textContent = 'You\'ve nailed the difference between a real goal and a wish — and that means when you write your own goals, you\'ll write ones that actually work. Now go do that. Pick one area of your life and write a SMART goal for it tonight.';
+  } else if (pct >= 0.75) {
+    finalEmoji.textContent = '💪';
+    finalTitle.textContent = 'Strong work.';
+    finalMessage.textContent = 'You\'ve got the framework down. The trickiest ones are usually the wishes that sound grown-up — \"be more successful,\" \"have a better relationship.\" Look back at the ones you missed and notice the missing piece. That\'s the muscle to keep building.';
+  } else if (pct >= 0.5) {
+    finalEmoji.textContent = '📚';
+    finalTitle.textContent = 'You\'re getting there.';
+    finalMessage.textContent = 'SMART goals are a skill, and like any skill they get sharper with practice. Reread Section 2 of the lesson and try this activity again — you\'ll see the patterns much faster the second time through.';
+  } else {
+    finalEmoji.textContent = '🔄';
+    finalTitle.textContent = 'Worth another try.';
+    finalMessage.textContent = 'Don\'t worry — most people have to be taught the difference between a goal and a wish, because school usually doesn\'t. Go back to Section 2 of the reading, walk through the SMART framework slowly, then come back. This stuff matters for the rest of your life.';
+  }
+}
+
+goalBtn.addEventListener('click', () => handleChoice('goal'));
+wishBtn.addEventListener('click', () => handleChoice('wish'));
+nextBtn.addEventListener('click', nextScenario);
+restartBtn.addEventListener('click', () => {
+  currentIndex = 0;
+  xp = 0;
+  xpEl.textContent = 0;
+  quizArea.style.display = 'block';
+  finalCard.classList.add('hidden');
+  loadScenario();
+});
+
+loadScenario();
+</script>
+
+</body>
+</html>
